@@ -6,6 +6,13 @@ This is the unofficial repository developing and releasing various mods for Phan
 こちらは， Brace Yourself Games 開発のビデオゲーム Phantom Brigade の様々な Mod を製作・公開する非公式のリポジトリです．
 
 
+## Contents
+### New Game + Mod (WIP)
+This mod allows you start a new game with higher enemies' level keeping your items after the capital liberation.
+
+首都解放後に強くてニューゲームを開始できる Mod です．アイテムはそのままに，敵のレベルが上昇します．
+
+
 ## Phantom Brigade Official Page
 https://braceyourselfgames.com/phantom-brigade/
 
