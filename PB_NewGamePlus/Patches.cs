@@ -1,4 +1,4 @@
-using HarmonyLib;
+﻿using HarmonyLib;
 using PhantomBrigade;
 using PhantomBrigade.Data;
 using PhantomBrigade.Mods;
@@ -86,6 +86,8 @@ namespace PBMods.NewGamePlus
 
             public static void SaveDataForNewGamePlus(DataManagerSave.SaveLocation saveLocation)
             {
+                Debug.Log("<NewGamePlus> Making custom save data");
+
                 DataContainerSave dataCurrent = SaveSerializationHelper.data;
 
                 DataManagerSave.SetSaveName("save_internal_newgame");
@@ -94,97 +96,117 @@ namespace PBMods.NewGamePlus
                 
                 if (SaveSerializationHelper.data == null)
                 {
-                    Debug.LogError("Failed to save due to missing internal data");
+                    Debug.LogError("<NewGamePlus> Failed to save due to missing internal data");
                     return;
                 }
 
                 string savePath = GetSavePathOfNewGamePlus(saveLocation);
                 if (savePath != null)
                 {
-                    Debug.Log("Writing saved game to path " + savePath);
-
-                    // SaveContainers with dataCurrent
-                    dataCurrent.OnBeforeSerialization();
-
-                    if (dataCurrent.metadata != null)
-                    {
-                        SaveContainer(savePath, "metadata.yaml", dataCurrent.metadata);
-                    }
-
-                    if (dataCurrent.core != null)
-                    {
-                        SaveContainer(savePath, "core.yaml", dataCurrent.core);
-                    }
-
-                    if (dataCurrent.stats != null)
-                    {
-                        SaveContainer(savePath, "stats.yaml", dataCurrent.stats);
-                    }
-
-                    if (dataCurrent.crawler != null)
-                    {
-                        SaveContainer(savePath, "crawler.yaml", dataCurrent.crawler);
-                    }
-
-                    if (dataCurrent.combat != null)
-                    {
-                        SaveContainer(savePath, "combat.yaml", dataCurrent.combat);
-                    }
-
-                    if (dataCurrent.units != null)
-                    {
-                        SaveContainers(savePath, "Units", dataCurrent.units);
-                    }
-
-                    if (dataCurrent.pilots != null)
-                    {
-                        SaveContainers(savePath, "Pilots", dataCurrent.pilots);
-                    }
+                    Debug.Log("<NewGamePlus> Writing saved game to path " + savePath);
+                    KeyValuePair<string, DataContainerSave> dataPair;
 
                     // SaveContainers with dataNewGame
                     dataNewGame.OnBeforeSerialization();
+                    dataPair = new KeyValuePair<string, DataContainerSave>("save_internal_newgame", dataNewGame);
 
-                    if (dataNewGame.world != null)
+                    if (dataPair.Value.world != null)
                     {
-                        SaveContainer(savePath, "world.yaml", dataNewGame.world);
+                        Debug.Log("<NewGamePlus> Writing world.yaml with " + dataPair.Key);
+                        _SaveContainer(savePath, "world.yaml", dataPair.Value.world);
                     }
 
-                    if (dataNewGame.provinces != null)
+                    if (dataPair.Value.provinces != null)
                     {
-                        SaveContainers(savePath, "OverworldProvinces", dataNewGame.provinces);
+                        Debug.Log("<NewGamePlus> Writing OverworldProvinces/ with " + dataPair.Key);
+                        _SaveContainers(savePath, "OverworldProvinces", dataPair.Value.provinces);
                     }
 
-                    if (dataNewGame.overworldEntities != null)
+                    if (dataPair.Value.overworldEntities != null)
                     {
-                        SaveContainers(savePath, "OverworldEntities", dataNewGame.overworldEntities);
+                        Debug.Log("<NewGamePlus> Writing OverworldEntities/ with " + dataPair.Key);
+                        _SaveContainers(savePath, "OverworldEntities", dataPair.Value.overworldEntities);
                     }
 
-                    if (dataNewGame.overworldActions != null)
+                    if (dataPair.Value.overworldActions != null)
                     {
-                        SaveContainers(savePath, "OverworldActions", dataNewGame.overworldActions);
+                        Debug.Log("<NewGamePlus> Writing OverworldActions/ with " + dataPair.Key);
+                        _SaveContainers(savePath, "OverworldActions", dataPair.Value.overworldActions);
                     }
 
-                    if (dataNewGame.combatActions != null)
+                    if (dataPair.Value.combatActions != null)
                     {
-                        SaveContainers(savePath, "CombatActions", dataNewGame.combatActions);
+                        Debug.Log("<NewGamePlus> Writing CombatActions/ with " + dataPair.Key);
+                        _SaveContainers(savePath, "CombatActions", dataPair.Value.combatActions);
+                    }
+
+                    // SaveContainers with dataCurrent
+                    dataCurrent.OnBeforeSerialization();
+                    dataPair = new KeyValuePair<string, DataContainerSave>("save_current", dataCurrent);
+
+                    if (dataPair.Value.metadata != null)
+                    {
+                        Debug.Log("<NewGamePlus> Writing metadata.yaml with " + dataPair.Key);
+                        _SaveContainer(savePath, "metadata.yaml", dataPair.Value.metadata);
+                    }
+
+                    if (dataPair.Value.core != null)
+                    {
+                        Debug.Log("<NewGamePlus> Writing core.yaml with " + dataPair.Key);
+                        _SaveContainer(savePath, "core.yaml", dataPair.Value.core);
+                    }
+
+                    if (dataPair.Value.stats != null)
+                    {
+                        Debug.Log("<NewGamePlus> Writing stats.yaml with " + dataPair.Key);
+                        _SaveContainer(savePath, "stats.yaml", dataPair.Value.stats);
+                    }
+
+                    if (dataPair.Value.crawler != null)
+                    {
+                        Debug.Log("<NewGamePlus> Writing crawler.yaml with " + dataPair.Key);
+                        _SaveContainer(savePath, "crawler.yaml", dataPair.Value.crawler);
+                    }
+
+                    if (dataPair.Value.combat != null)
+                    {
+                        Debug.Log("<NewGamePlus> Writing combat.yaml with " + dataPair.Key);
+                        _SaveContainer(savePath, "combat.yaml", dataPair.Value.combat);
+                    }
+
+                    if (dataPair.Value.units != null)
+                    {
+                        Debug.Log("<NewGamePlus> Writing Units/ with " + dataPair.Key);
+                        _SaveContainers(savePath, "Units", dataPair.Value.units);
+                    }
+
+                    if (dataPair.Value.pilots != null)
+                    {
+                        Debug.Log("<NewGamePlus> Writing Pilots/ with " + dataPair.Key);
+                        _SaveContainers(savePath, "Pilots", dataPair.Value.pilots);
                     }
 
                     //DataManagerSave.unsavedChangesPossible = false;
                     //DataManagerSave.RefreshSaveHeaders();
+
                 }
 
+                Debug.Log("<NewGamePlus> Finished saving custom data");
             }
 
-            private static void SaveContainer<T>(string savePath, string filename, T savedObject)
+            // Refered from PhantomBrigade.Data.DataManagerSave.SaveContainer()
+            private static void _SaveContainer<T>(string savePath, string filename, T savedObject)
             {
                 UtilitiesYAML.SaveDataToFile(savePath, filename, savedObject, appendApplicationPath: false);
             }
 
-            private static void SaveContainers<T>(string savePath, string subfolder, SortedDictionary<string, T> savedDictionary) where T : DataContainer
+            // Refered from PhantomBrigade.Data.DataManagerSave.SaveContainers()
+            private static void _SaveContainers<T>(string savePath, string subfolder, SortedDictionary<string, T> savedDictionary) where T : DataContainer
             {
                 UtilitiesYAML.SaveDecomposedDictionary(savePath + subfolder, savedDictionary, warnAboutDeletions: false, appendApplicationPath: false);
             }
 
+            // Refered from PhantomBrigade.Data.DataManagerSave.GetSavePath()
             private static string GetSavePathOfNewGamePlus(DataManagerSave.SaveLocation saveLocation)
             {
                 string saveFolderPath = DataManagerSave.GetSaveFolderPath(saveLocation);
@@ -205,7 +227,7 @@ namespace PBMods.NewGamePlus
             
             public static void IncrementCombatUnitLevel(int levelBoost)
             {
-                Debug.Log("<NewGamePlus> Initiated level incrementation");
+                Debug.Log("<NewGamePlus> Starting level incrementation");
 
                 // Get all entities in overworld context
                 OverworldContext overworld = Contexts.sharedInstance.overworld;
