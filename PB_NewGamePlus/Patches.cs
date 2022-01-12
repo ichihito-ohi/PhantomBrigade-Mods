@@ -1,4 +1,4 @@
-﻿using HarmonyLib;
+using HarmonyLib;
 using PhantomBrigade;
 using PhantomBrigade.Data;
 using PhantomBrigade.Mods;
@@ -31,50 +31,58 @@ namespace PBMods.NewGamePlus
         [HarmonyPatch("OnEndCapitalDelayed")]
         public class PatchOnEndCapitalDelayed
         {
+            // The proccess below is excuted after PhantomBrigade.Data.ScenarioFunctions.OnEndCapitalDelayed()
             public static void Postfix()
             {
                 Debug.Log("<NewGamePlus> Mod executes this as suffix to ScenarioFunctions.OnEndCapitalDelayed()");
 
-                // WIP: Skipping confirmation
-                ConfirmSavingNewGamePlus();
+                // You can set two actions excuted according to the player's confirmation. 
 
                 //saveInfoHelper.buttonConfirm.available = false;
-                CIViewDialogConfirmation.ins.Open("Starting New Game +", "Are you sure you'd like to start New Game +? (You can not start it later.)", ConfirmLoadingNewGamePlus, null) ;
+                CIViewDialogConfirmation.ins.Open("Starting New Game +", "Are you sure you'd like to start New Game +? (You can not start it later.)", ConfirmStartingNewGamePlus, null) ;
             }
         
 
             public static string saveNameOfNewGamePlus = "new_game_plus";
 
             //public CIHelperSaveGameInfo saveInfoHelper;
-            public static void ConfirmSavingNewGamePlus()
+
+            public static void ConfirmStartingNewGamePlus()
             {
+                InitSaveOfNewGamePlus();
+                StartNewGamePlus();
+            }
+
+            public static void InitSaveOfNewGamePlus()
+            {
+                Debug.Log("<NewGamePlus> Initializing save data");
                 //saveInfoHelper.buttonConfirm.available = saveAvailableLast;
                 DataManagerSave.SaveFromECS();
                 //DataManagerSave.SaveData(DataManagerSave.SaveLocation.PickFromBuildType);
                 SaveDataForNewGamePlus(DataManagerSave.SaveLocation.PickFromBuildType);
+
+                Debug.Log("<NewGamePlus> Finished initialization of save data");
             }
 
-            //public void CancelSavingNewGamePlus()
-            //{
-            //    saveInfoHelper.buttonConfirm.available = saveAvailableLast;
-            //}
-
-            public static void ConfirmLoadingNewGamePlus()
+            public static void StartNewGamePlus()
             {
+                Debug.Log("<NewGamePlus> Loading incompleted save data");
                 //saveInfoHelper.buttonConfirm.available = false;
                 DataHelperLoading.TryLoading(saveNameOfNewGamePlus, DataManagerSave.SaveLocation.PickFromBuildType);
                 Co.Delay(3, delegate
                 {
                     OverworldContext overworld = Contexts.sharedInstance.overworld;
+
+                    Debug.Log("<NewGamePlus> Focusing camera on the player base");
                     overworld.ReplaceCameraFocusRequest(IDUtility.playerBaseOverworld.position.v);
+
                     IncrementCombatUnitLevel(20);
+
+                    Debug.Log("<NewGamePlus> Saving game after level incrementation");
+                    //saveInfoHelper.buttonConfirm.available = saveAvailableLast;
+                    DataManagerSave.DoSave(saveNameOfNewGamePlus, DataManagerSave.SaveLocation.PickFromBuildType);
                 });
             }
-
-            //public void CancelLoadingNewGamePlus()
-            //{
-            //    saveInfoHelper.buttonConfirm.available = true;
-            //}
 
             public static void SaveDataForNewGamePlus(DataManagerSave.SaveLocation saveLocation)
             {
