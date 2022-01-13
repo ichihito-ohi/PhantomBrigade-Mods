@@ -1,4 +1,4 @@
-using HarmonyLib;
+﻿using HarmonyLib;
 using PhantomBrigade;
 using PhantomBrigade.Data;
 using PhantomBrigade.Mods;
@@ -13,7 +13,7 @@ using UnityEngine;
 namespace PBMods.NewGamePlus
 {
     // All mods using libraries must include one class inheriting from ModLink
-    public class NewGamePlusLink: ModLink
+    public class NewGamePlusLink : ModLink
     {
         public override void OnLoad(Harmony harmonyInstance)
         {
@@ -40,9 +40,9 @@ namespace PBMods.NewGamePlus
                 // You can set two actions excuted according to the player's confirmation. 
 
                 //saveInfoHelper.buttonConfirm.available = false;
-                CIViewDialogConfirmation.ins.Open("Starting New Game +", "Are you sure you'd like to start New Game +? (You can not start it later.)", ConfirmStartingNewGamePlus, null) ;
+                CIViewDialogConfirmation.ins.Open("Starting New Game +", "Are you sure you'd like to start New Game +? (You can not start it later.)", ConfirmStartingNewGamePlus, null);
             }
-        
+
 
             public static string saveNameNewGamePlus = "new_game_plus";
 
@@ -50,11 +50,15 @@ namespace PBMods.NewGamePlus
 
             public static void ConfirmStartingNewGamePlus()
             {
+                Debug.Log("<NewGamePlus> Staring initialization of new game plus");
+                
                 OverworldEntity baseOverworld = IDUtility.playerBaseOverworld;
                 Vector3 baseResetPos = new Vector3(-872.0198f, 50.31255f, -672.7128f);   // temporary
                 ResetBasePosition(baseOverworld, baseResetPos);
                 InitSaveOfNewGamePlus();
                 StartNewGamePlus();
+
+                Debug.Log("<NewGamePlus> Complited initialization of new game plus");
             }
 
             public static void InitSaveOfNewGamePlus()
@@ -102,11 +106,11 @@ namespace PBMods.NewGamePlus
             {
                 Debug.Log("<NewGamePlus> Making custom save data");
 
-                DataContainerSave dataCurrent = SaveSerializationHelper.data;
+                DataContainerSave dataKeep = SaveSerializationHelper.data;
 
                 DataManagerSave.SetSaveName("save_internal_newgame");
                 DataManagerSave.LoadData(DataManagerSave.SaveLocation.Internal);
-                DataContainerSave dataNewGame = SaveSerializationHelper.data;
+                DataContainerSave dataReset = SaveSerializationHelper.data;
                 
                 if (SaveSerializationHelper.data == null)
                 {
@@ -120,9 +124,9 @@ namespace PBMods.NewGamePlus
                     Debug.Log("<NewGamePlus> Writing saved game to path " + savePath);
                     KeyValuePair<string, DataContainerSave> dataPair;
 
-                    // SaveContainers with dataNewGame
-                    dataNewGame.OnBeforeSerialization();
-                    dataPair = new KeyValuePair<string, DataContainerSave>("save_internal_newgame", dataNewGame);
+                    // Save containers with reseting data
+                    dataReset.OnBeforeSerialization();
+                    dataPair = new KeyValuePair<string, DataContainerSave>("save_internal_newgame", dataReset);
 
                     if (dataPair.Value.world != null)
                     {
@@ -132,31 +136,31 @@ namespace PBMods.NewGamePlus
 
                     if (dataPair.Value.provinces != null)
                     {
-                        Debug.Log("<NewGamePlus> Writing OverworldProvinces/ with " + dataPair.Key);
+                        Debug.Log("<NewGamePlus> Writing OverworldProvinces with " + dataPair.Key);
                         _SaveContainers(savePath, "OverworldProvinces", dataPair.Value.provinces);
                     }
 
                     if (dataPair.Value.overworldEntities != null)
                     {
-                        Debug.Log("<NewGamePlus> Writing OverworldEntities/ with " + dataPair.Key);
+                        Debug.Log("<NewGamePlus> Writing OverworldEntities with " + dataPair.Key);
                         _SaveContainers(savePath, "OverworldEntities", dataPair.Value.overworldEntities);
                     }
 
                     if (dataPair.Value.overworldActions != null)
                     {
-                        Debug.Log("<NewGamePlus> Writing OverworldActions/ with " + dataPair.Key);
+                        Debug.Log("<NewGamePlus> Writing OverworldActions with " + dataPair.Key);
                         _SaveContainers(savePath, "OverworldActions", dataPair.Value.overworldActions);
                     }
 
                     if (dataPair.Value.combatActions != null)
                     {
-                        Debug.Log("<NewGamePlus> Writing CombatActions/ with " + dataPair.Key);
+                        Debug.Log("<NewGamePlus> Writing CombatActions with " + dataPair.Key);
                         _SaveContainers(savePath, "CombatActions", dataPair.Value.combatActions);
                     }
 
-                    // SaveContainers with dataCurrent
-                    dataCurrent.OnBeforeSerialization();
-                    dataPair = new KeyValuePair<string, DataContainerSave>("save_current", dataCurrent);
+                    // Save containers with keeping data
+                    dataKeep.OnBeforeSerialization();
+                    dataPair = new KeyValuePair<string, DataContainerSave>("save_current", dataKeep);
 
                     if (dataPair.Value.metadata != null)
                     {
@@ -190,13 +194,13 @@ namespace PBMods.NewGamePlus
 
                     if (dataPair.Value.units != null)
                     {
-                        Debug.Log("<NewGamePlus> Writing Units/ with " + dataPair.Key);
+                        Debug.Log("<NewGamePlus> Writing Units with " + dataPair.Key);
                         _SaveContainers(savePath, "Units", dataPair.Value.units);
                     }
 
                     if (dataPair.Value.pilots != null)
                     {
-                        Debug.Log("<NewGamePlus> Writing Pilots/ with " + dataPair.Key);
+                        Debug.Log("<NewGamePlus> Writing Pilots with " + dataPair.Key);
                         _SaveContainers(savePath, "Pilots", dataPair.Value.pilots);
                     }
 
@@ -215,13 +219,13 @@ namespace PBMods.NewGamePlus
                 Debug.Log("<NewGamePlus> Finished saving custom data");
             }
 
-            // Refered from PhantomBrigade.Data.DataManagerSave.SaveContainer()
+            // Refering from PhantomBrigade.Data.DataManagerSave.SaveContainer()
             private static void _SaveContainer<T>(string savePath, string filename, T savedObject)
             {
                 UtilitiesYAML.SaveDataToFile(savePath, filename, savedObject, appendApplicationPath: false);
             }
 
-            // Refered from PhantomBrigade.Data.DataManagerSave.SaveContainers()
+            // Refering from PhantomBrigade.Data.DataManagerSave.SaveContainers()
             private static void _SaveContainers<T>(string savePath, string subfolder, SortedDictionary<string, T> savedDictionary) where T : DataContainer
             {
                 UtilitiesYAML.SaveDecomposedDictionary(savePath + subfolder, savedDictionary, warnAboutDeletions: false, appendApplicationPath: false);
@@ -275,13 +279,13 @@ namespace PBMods.NewGamePlus
                 string saveFolderPath = DataManagerSave.GetSaveFolderPath(saveLocation);
                 if (string.IsNullOrEmpty(saveFolderPath))
                 {
-                    Debug.LogError("Failed to process saved game due to null or empty folder path");
+                    Debug.LogError("<NewGamePlus> Failed to process saved game due to null or empty folder path");
                     return null;
                 }
 
                 if (string.IsNullOrEmpty(saveNameNewGamePlus))
                 {
-                    Debug.LogError("Failed to process saved game due to null or empty save name");
+                    Debug.LogError("<NewGamePlus> Failed to process saved game due to null or empty save name");
                     return null;
                 }
 
@@ -310,7 +314,8 @@ namespace PBMods.NewGamePlus
 
                 Debug.Log("<NewGamePlus> Finished reset base position");
             }
-            
+
+            // Increment site level
             public static void IncrementCombatUnitLevel(int levelBoost)
             {
                 Debug.Log("<NewGamePlus> Starting level incrementation");
@@ -341,7 +346,7 @@ namespace PBMods.NewGamePlus
                     if (entityOverworld.isPlayerKnown)
                     {
                         CIViewOverworldOverlays.ins.OnEntityChange(entityOverworld);
-                        Debug.Log("<NewGamePlus> entityOverworld " + entityOverworld.nameInternal + "was refleshed");
+                        Debug.Log("<NewGamePlus> entityOverworld " + entityOverworld.nameInternal + " was refleshed");
                     }
                 }
 
