@@ -1,10 +1,11 @@
-﻿using HarmonyLib;
+using HarmonyLib;
 using PhantomBrigade;
 using PhantomBrigade.Data;
 using PhantomBrigade.Mods;
 using PhantomBrigade.Overworld;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using UnityEngine;
 
@@ -186,6 +187,13 @@ namespace PBMods.NewGamePlus
                         _SaveContainers(savePath, "Pilots", dataPair.Value.pilots);
                     }
 
+                    // Replacing saved files in subfolder with dataKeep
+                    if (dataPair.Value.overworldEntities != null)
+                    {
+                        Debug.Log("<NewGamePlus> Replacing OverworldEntities/squad_mobilebase with " + dataPair.Key);
+                        ReplaceContainers(savePath, "OverworldEntities", "squad_mobilebase", dataPair.Value.overworldEntities);
+                    }
+
                     //DataManagerSave.unsavedChangesPossible = false;
                     //DataManagerSave.RefreshSaveHeaders();
 
@@ -206,7 +214,49 @@ namespace PBMods.NewGamePlus
                 UtilitiesYAML.SaveDecomposedDictionary(savePath + subfolder, savedDictionary, warnAboutDeletions: false, appendApplicationPath: false);
             }
 
-            // Refered from PhantomBrigade.Data.DataManagerSave.GetSavePath()
+            private static void ReplaceContainers<T>(string savePath, string subfolder, string key, SortedDictionary<string, T> savedDictionary) where T : DataContainer
+            {
+                SortedDictionary<string, T> replacedDictionary = new SortedDictionary<string, T>();
+                T value;
+                if (savedDictionary.TryGetValue(key, out value))
+                {
+                    replacedDictionary.Add(key, value);
+                }
+                ReplaceDecomposedDictionary(savePath + subfolder, replacedDictionary);
+            }
+
+            // Refering from UtilitiesYAML.SaveDecomposedDictionary()
+            public static void ReplaceDecomposedDictionary<T>(string folderPath, IDictionary<string, T> savedDictionary, bool warnAboutDeletions = true, bool appendApplicationPath = true) where T : DataContainer
+            {
+                if (appendApplicationPath)
+                {
+                    folderPath = DataPathHelper.GetCombinedCleanPath(DataPathHelper.GetApplicationFolder(), folderPath);
+                }
+
+                if (!Directory.Exists(folderPath))
+                {
+                    Debug.LogWarning("<NewGamePlus> Utilities | CheckDirectorySafety | Could not find directory: " + folderPath);
+                    try
+                    {
+                        Directory.CreateDirectory(folderPath);
+                        Debug.Log("<NewGamePlus> Utilities | CheckDirectorySafety | Created directory: " + folderPath);
+                    }
+                    catch (Exception exception)
+                    {
+                        Debug.LogException(exception);
+                    }
+                }
+
+                foreach (KeyValuePair<string, T> item in savedDictionary)
+                {
+                    if (!string.IsNullOrEmpty(item.Key))
+                    {
+                        UtilitiesYAML.SaveDataToFile(folderPath, item.Key.ToLowerInvariant() + ".yaml", item.Value);
+                    }
+                }
+            }
+
+            // Refering from PhantomBrigade.Data.DataManagerSave.GetSavePath()
             private static string GetSavePathOfNewGamePlus(DataManagerSave.SaveLocation saveLocation)
             {
                 string saveFolderPath = DataManagerSave.GetSaveFolderPath(saveLocation);
