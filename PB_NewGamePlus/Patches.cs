@@ -44,12 +44,15 @@ namespace PBMods.NewGamePlus
             }
         
 
-            public static string saveNameOfNewGamePlus = "new_game_plus";
+            public static string saveNameNewGamePlus = "new_game_plus";
 
             //public CIHelperSaveGameInfo saveInfoHelper;
 
             public static void ConfirmStartingNewGamePlus()
             {
+                OverworldEntity baseOverworld = IDUtility.playerBaseOverworld;
+                Vector3 baseResetPos = new Vector3(-872.0198f, 50.31255f, -672.7128f);   // temporary
+                ResetBasePosition(baseOverworld, baseResetPos);
                 InitSaveOfNewGamePlus();
                 StartNewGamePlus();
             }
@@ -69,19 +72,29 @@ namespace PBMods.NewGamePlus
             {
                 Debug.Log("<NewGamePlus> Loading incompleted save data");
                 //saveInfoHelper.buttonConfirm.available = false;
-                DataHelperLoading.TryLoading(saveNameOfNewGamePlus, DataManagerSave.SaveLocation.PickFromBuildType);
-                Co.Delay(3, delegate
+                DataHelperLoading.TryLoading(saveNameNewGamePlus, DataManagerSave.SaveLocation.PickFromBuildType, OnNewGamePlusKeepingScreen, true);
+            }
+
+            public static void OnNewGamePlusKeepingScreen()
+            {
+                CIViewBackgroundLoading.ins.SetProgressText("Initializing new game +...");
+
+                IncrementCombatUnitLevel(20);
+
+                Debug.Log("<NewGamePlus> Saving game after level incrementation");
+                //saveInfoHelper.buttonConfirm.available = saveAvailableLast;
+                DataManagerSave.DoSave(saveNameNewGamePlus, DataManagerSave.SaveLocation.PickFromBuildType);
+
+                Co.DelayFrames(3, delegate
                 {
                     OverworldContext overworld = Contexts.sharedInstance.overworld;
+                    OverworldEntity baseOverworld = IDUtility.playerBaseOverworld;
 
-                    Debug.Log("<NewGamePlus> Focusing camera on the player base");
+                    OverworldUtility.StopMovement(baseOverworld);
                     overworld.ReplaceCameraFocusRequest(IDUtility.playerBaseOverworld.position.v);
+                    overworld.ReplaceSelectedEntity(IDUtility.playerBaseOverworld.id.id);
 
-                    IncrementCombatUnitLevel(20);
-
-                    Debug.Log("<NewGamePlus> Saving game after level incrementation");
-                    //saveInfoHelper.buttonConfirm.available = saveAvailableLast;
-                    DataManagerSave.DoSave(saveNameOfNewGamePlus, DataManagerSave.SaveLocation.PickFromBuildType);
+                    CIViewBackgroundLoading.ins.TryExit();
                 });
             }
 
@@ -266,13 +279,36 @@ namespace PBMods.NewGamePlus
                     return null;
                 }
 
-                if (string.IsNullOrEmpty(saveNameOfNewGamePlus))
+                if (string.IsNullOrEmpty(saveNameNewGamePlus))
                 {
                     Debug.LogError("Failed to process saved game due to null or empty save name");
                     return null;
                 }
 
-                return saveFolderPath + saveNameOfNewGamePlus + "/";
+                return saveFolderPath + saveNameNewGamePlus + "/";
+            }
+
+            // Reset Base Position
+            public static void ResetBasePosition(OverworldEntity baseOverworld, Vector3 baseResetPos)
+            {
+                Debug.Log("<NewGamePlus> Starting reset base position to (x, y, z) = (" + baseResetPos.x + ", " + baseResetPos.y + ", " + baseResetPos.z + ")");
+
+                // Ensure the base has all its movement cancelled
+                OverworldUtility.StopMovement(baseOverworld);
+                baseOverworld.isDeployed = false;
+
+                // Move the base to one of spawn points in starting province
+                baseOverworld.ReplacePosition(baseResetPos);
+
+                // Make the base check its vertical position in case center of the province is under terrain
+                baseOverworld.isPositionUnchecked = true;
+
+                // Focus camera on the replased base
+                OverworldContext overworld = Contexts.sharedInstance.overworld;
+                overworld.ReplaceCameraFocusRequest(IDUtility.playerBaseOverworld.position.v);
+                overworld.ReplaceSelectedEntity(IDUtility.playerBaseOverworld.id.id);
+
+                Debug.Log("<NewGamePlus> Finished reset base position");
             }
             
             public static void IncrementCombatUnitLevel(int levelBoost)
